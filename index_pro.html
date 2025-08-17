@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khuzicyber Typing Practice</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+    }
+    .options {
+      margin: 20px 0;
+    }
+    select, button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    button {
+      background: #ff9800;
+      color: white;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e68900;
+    }
+    #textDisplay {
+      margin: 20px;
+      padding: 20px;
+      max-width: 700px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      min-height: 100px;
+      font-size: 1.2em;
+      text-align: left;
+    }
+    #textInput {
+      width: 80%;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+      margin-top: 10px;
+    }
+    .stats {
+      margin-top: 20px;
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 400px;
+    }
+    .hidden {
+      display: none;
+    }
+    canvas {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .correct { color: #4caf50; }
+    .incorrect { color: #f44336; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Khuzicyber Typing Practice</h1>
+  <div class="options">
+    <label>Mode: 
+      <select id="mode">
+        <option value="words">Words</option>
+        <option value="sentences">Sentences</option>
+        <option value="paragraphs">Paragraphs</option>
+      </select>
+    </label>
+    <label>Difficulty: 
+      <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </label>
+    <label>Timer: 
+      <select id="timer">
+        <option value="30">30s</option>
+        <option value="60">60s</option>
+        <option value="120">2min</option>
+        <option value="free">Free Mode</option>
+      </select>
+    </label>
+  </div>
+  <button id="startBtn">Start Practice</button>
+  <div id="textDisplay" class="hidden"></div>
+  <textarea id="textInput" class="hidden" placeholder="Start typing here..." disabled></textarea>
+  <div class="stats hidden" id="stats">
+    <p><b>WPM:</b> <span id="wpm">0</span></p>
+    <p><b>Accuracy:</b> <span id="accuracy">0</span>%</p>
+    <p><b>Mistakes:</b> <span id="mistakes">0</span></p>
+    <button id="restartBtn">Restart</button>
+  </div>
+  <canvas id="historyChart" width="400" height="200"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const textDisplay = document.getElementById("textDisplay");
+    const textInput = document.getElementById("textInput");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const statsDiv = document.getElementById("stats");
+    const wpmEl = document.getElementById("wpm");
+    const accEl = document.getElementById("accuracy");
+    const mistakesEl = document.getElementById("mistakes");
+
+    const historyChartEl = document.getElementById("historyChart");
+    let chart;
+    let timerValue, timeLeft, timerInterval;
+    let startTime;
+    let targetText = "";
+    let mistakes = 0;
+
+    const sampleWords = ["cyber", "security", "network", "python", "practice", "typing", "hacker", "linux", "keyboard", "monitor"];
+    const sampleSentences = [
+      "Cyber security is very important for the future.",
+      "Typing practice improves speed and accuracy.",
+      "Khuzicyber is becoming a professional ethical hacker."
+    ];
+    const sampleParagraphs = [
+      "Typing is an essential skill in the digital age. The more you practice, the better you become. With consistent effort, your speed and accuracy will both improve. Remember to stay calm and focused while practicing.",
+      "Cybersecurity requires not just knowledge but also fast thinking. Practicing typing helps you think and act quickly, which is very useful in coding and hacking simulations."
+    ];
+
+    function getText(mode) {
+      if (mode === "words") {
+        return sampleWords.sort(() => Math.random() - 0.5).slice(0, 20).join(" ");
+      } else if (mode === "sentences") {
+        return sampleSentences[Math.floor(Math.random() * sampleSentences.length)];
+      } else {
+        return sampleParagraphs[Math.floor(Math.random() * sampleParagraphs.length)];
+      }
+    }
+
+    function startPractice() {
+      const mode = document.getElementById("mode").value;
+      const difficulty = document.getElementById("difficulty").value;
+      const timer = document.getElementById("timer").value;
+
+      targetText = getText(mode);
+      textDisplay.innerHTML = targetText.split("").map(ch => `<span>${ch}</span>`).join("");
+      textDisplay.classList.remove("hidden");
+      textInput.classList.remove("hidden");
+      textInput.value = "";
+      textInput.disabled = false;
+      textInput.focus();
+
+      statsDiv.classList.add("hidden");
+      mistakes = 0;
+
+      if (timer !== "free") {
+        timerValue = parseInt(timer);
+        timeLeft = timerValue;
+        timerInterval = setTimeout(endPractice, timerValue * 1000);
+      }
+
+      startTime = new Date();
+    }
+
+    textInput.addEventListener("input", () => {
+      const arrayText = textDisplay.querySelectorAll("span");
+      const arrayValue = textInput.value.split("");
+      mistakes = 0;
+
+      arrayText.forEach((charSpan, index) => {
+        const char = arrayValue[index];
+        if (char == null) {
+          charSpan.classList.remove("correct", "incorrect");
+        } else if (char === charSpan.innerText) {
+          charSpan.classList.add("correct");
+          charSpan.classList.remove("incorrect");
+        } else {
+          charSpan.classList.add("incorrect");
+          charSpan.classList.remove("correct");
+          mistakes++;
+        }
+      });
+
+      if (arrayValue.length === targetText.length) {
+        endPractice();
+      }
+    });
+
+    function endPractice() {
+      clearTimeout(timerInterval);
+      const timeTaken = (new Date() - startTime) / 1000 / 60;
+      const words = textInput.value.trim().split(" ").length;
+      const wpm = Math.round(words / timeTaken);
+      const accuracy = Math.max(0, Math.round(((textInput.value.length - mistakes) / textInput.value.length) * 100));
+
+      wpmEl.textContent = wpm;
+      accEl.textContent = accuracy;
+      mistakesEl.textContent = mistakes;
+
+      statsDiv.classList.remove("hidden");
+
+      // Save to history
+      let history = JSON.parse(localStorage.getItem("typingHistory") || "[]");
+      history.push(wpm);
+      if (history.length > 5) history.shift();
+      localStorage.setItem("typingHistory", JSON.stringify(history));
+
+      updateChart(history);
+      textInput.disabled = true;
+    }
+
+    function updateChart(history) {
+      if (chart) chart.destroy();
+      chart = new Chart(historyChartEl, {
+        type: 'line',
+        data: {
+          labels: history.map((_, i) => `Try ${i+1}`),
+          datasets: [{
+            label: 'WPM History',
+            data: history,
+            borderColor: 'rgba(255, 159, 64, 1)',
+            backgroundColor: 'rgba(255, 159, 64, 0.2)'
+          }]
+        }
+      });
+    }
+
+    startBtn.addEventListener("click", startPractice);
+    restartBtn.addEventListener("click", startPractice);
+
+    // Load history initially
+    updateChart(JSON.parse(localStorage.getItem("typingHistory") || "[]"));
+  </script>
+</body>
+</html>
