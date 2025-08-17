@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,12 +10,34 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #1e3c72, #2a5298);
       color: #fff;
-      text-align: center;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+    }
+    header {
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    nav a {
+      margin: 0 10px;
+      color: #ff9800;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      text-align: center;
     }
     h1 {
       margin-bottom: 20px;
@@ -78,44 +99,88 @@
     }
     .correct { color: #4caf50; }
     .incorrect { color: #f44336; text-decoration: underline; }
+    footer {
+      background: rgba(0,0,0,0.5);
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+    }
+    /* Light Mode */
+    .light-mode {
+      background: #f4f4f4;
+      color: #121212;
+    }
+    .light-mode header, .light-mode footer {
+      background: #ddd;
+      color: #121212;
+    }
+    .light-mode #textDisplay {
+      background: rgba(0,0,0,0.1);
+    }
+    .light-mode .stats {
+      background: rgba(0,0,0,0.1);
+    }
+    .light-mode button {
+      background: #2196f3;
+      color: white;
+    }
+    .light-mode button:hover {
+      background: #1976d2;
+    }
   </style>
 </head>
 <body>
-  <h1>Khuzicyber Typing Practice</h1>
-  <div class="options">
-    <label>Mode: 
-      <select id="mode">
-        <option value="words">Words</option>
-        <option value="sentences">Sentences</option>
-        <option value="paragraphs">Paragraphs</option>
-      </select>
-    </label>
-    <label>Difficulty: 
-      <select id="difficulty">
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
-      </select>
-    </label>
-    <label>Timer: 
-      <select id="timer">
-        <option value="30">30s</option>
-        <option value="60">60s</option>
-        <option value="120">2min</option>
-        <option value="free">Free Mode</option>
-      </select>
-    </label>
-  </div>
-  <button id="startBtn">Start Practice</button>
-  <div id="textDisplay" class="hidden"></div>
-  <textarea id="textInput" class="hidden" placeholder="Start typing here..." disabled></textarea>
-  <div class="stats hidden" id="stats">
-    <p><b>WPM:</b> <span id="wpm">0</span></p>
-    <p><b>Accuracy:</b> <span id="accuracy">0</span>%</p>
-    <p><b>Mistakes:</b> <span id="mistakes">0</span></p>
-    <button id="restartBtn">Restart</button>
-  </div>
-  <canvas id="historyChart" width="400" height="200"></canvas>
+  <header>
+    🚀 Khuzicyber Typing
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Practice</a>
+      <a href="#">About</a>
+      <button onclick="toggleMode()">🌙/☀️</button>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Khuzicyber Typing Practice</h1>
+    <div class="options">
+      <label>Mode: 
+        <select id="mode">
+          <option value="words">Words</option>
+          <option value="sentences">Sentences</option>
+          <option value="paragraphs">Paragraphs</option>
+        </select>
+      </label>
+      <label>Difficulty: 
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
+      <label>Timer: 
+        <select id="timer">
+          <option value="30">30s</option>
+          <option value="60">60s</option>
+          <option value="120">2min</option>
+          <option value="free">Free Mode</option>
+        </select>
+      </label>
+    </div>
+    <button id="startBtn">Start Practice</button>
+    <div id="textDisplay" class="hidden"></div>
+    <textarea id="textInput" class="hidden" placeholder="Start typing here..." disabled></textarea>
+    <div class="stats hidden" id="stats">
+      <p><b>WPM:</b> <span id="wpm">0</span></p>
+      <p><b>Accuracy:</b> <span id="accuracy">0</span>%</p>
+      <p><b>Mistakes:</b> <span id="mistakes">0</span></p>
+      <button id="restartBtn">Restart</button>
+    </div>
+    <canvas id="historyChart" width="400" height="200"></canvas>
+  </main>
+
+  <footer>
+    © 2025 Khuzicyber | All Rights Reserved
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -158,7 +223,6 @@
 
     function startPractice() {
       const mode = document.getElementById("mode").value;
-      const difficulty = document.getElementById("difficulty").value;
       const timer = document.getElementById("timer").value;
 
       targetText = getText(mode);
@@ -218,7 +282,6 @@
 
       statsDiv.classList.remove("hidden");
 
-      // Save to history
       let history = JSON.parse(localStorage.getItem("typingHistory") || "[]");
       history.push(wpm);
       if (history.length > 5) history.shift();
@@ -244,10 +307,13 @@
       });
     }
 
+    function toggleMode() {
+      document.body.classList.toggle("light-mode");
+    }
+
     startBtn.addEventListener("click", startPractice);
     restartBtn.addEventListener("click", startPractice);
 
-    // Load history initially
     updateChart(JSON.parse(localStorage.getItem("typingHistory") || "[]"));
   </script>
 </body>
